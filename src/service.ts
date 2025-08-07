@@ -11,6 +11,8 @@ import {
   WolframAPIEndpoint,
   WolframCacheEntry,
   WolframPod,
+  WolframAnalysisResult,
+  WolframServiceStats,
 } from "./types";
 
 export const WOLFRAM_SERVICE_NAME = "wolfram";
@@ -31,6 +33,7 @@ export class WolframService extends Service {
   cache: Map<string, WolframCacheEntry>;
   conversationCache: Map<string, string>; // userId -> conversationID
   readonly CACHE_TTL = 3600000; // 1 hour in milliseconds
+  readonly MAX_CACHE_ENTRIES = 200; // Cap cache size to avoid unbounded growth
 
   constructor(runtime: IAgentRuntime) {
     super();
@@ -57,6 +60,8 @@ export class WolframService extends Service {
         },
       });
 
+      // Note: LLM and Conversation requests will use absolute URLs with this client
+
       // Test the API connection
       await this.validateApiKey();
 
@@ -71,19 +76,49 @@ export class WolframService extends Service {
    * Validates the API key by making a test request
    */
   private async validateApiKey(): Promise<void> {
+    // Minimal validation by querying the Short Answer API
     try {
-      const response = await this.client.get("/validate", {
+      const response = await this.client.get("/short", {
         params: {
           appid: this.wolframConfig.WOLFRAM_APP_ID,
+          input: "2+2",
         },
       });
-
-      if (response.data !== "true") {
-        throw new Error("Invalid Wolfram Alpha App ID");
+      if (!response?.data || typeof response.data !== "string") {
+        throw new Error("Unexpected validation response");
       }
     } catch (error) {
       logger.error("Failed to validate Wolfram API key:", error);
       throw new Error("Invalid or missing Wolfram Alpha App ID");
+    }
+  }
+
+  /**
+   * Lightweight retry for transient errors (429/5xx)
+   */
+  private async getWithRetry(
+    client: AxiosInstance,
+    url: string,
+    config: any,
+    maxRetries: number = 2,
+  ): Promise<any> {
+    let attempt = 0;
+    let delayMs = 250;
+    // Use absolute minimal jitter/backoff
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        return await client.get(url, config);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        const retriable = status === 429 || (status >= 500 && status < 600);
+        if (!retriable || attempt >= maxRetries) {
+          throw err;
+        }
+        await new Promise((r) => setTimeout(r, delayMs));
+        attempt += 1;
+        delayMs *= 2;
+      }
     }
   }
 
@@ -123,7 +158,7 @@ export class WolframService extends Service {
         params.scanner = this.wolframConfig.WOLFRAM_SCANNERS;
       }
 
-      const response = await this.client.get(WolframAPIEndpoint.QUERY, {
+      const response = await this.getWithRetry(this.client, WolframAPIEndpoint.QUERY, {
         params,
       });
 
@@ -159,7 +194,7 @@ export class WolframService extends Service {
     try {
       logger.log(`🖼️ Getting simple answer for: "${input}"`);
 
-      const response = await this.client.get(WolframAPIEndpoint.SIMPLE, {
+      const response = await this.getWithRetry(this.client, WolframAPIEndpoint.SIMPLE, {
         params: {
           appid: this.wolframConfig.WOLFRAM_APP_ID,
           input,
@@ -197,7 +232,7 @@ export class WolframService extends Service {
     try {
       logger.log(`📝 Getting short answer for: "${input}"`);
 
-      const response = await this.client.get(WolframAPIEndpoint.SHORT, {
+      const response = await this.getWithRetry(this.client, WolframAPIEndpoint.SHORT, {
         params: {
           appid: this.wolframConfig.WOLFRAM_APP_ID,
           input,
@@ -237,7 +272,7 @@ export class WolframService extends Service {
     try {
       logger.log(`🗣️ Getting spoken answer for: "${input}"`);
 
-      const response = await this.client.get(WolframAPIEndpoint.SPOKEN, {
+      const response = await this.getWithRetry(this.client, WolframAPIEndpoint.SPOKEN, {
         params: {
           appid: this.wolframConfig.WOLFRAM_APP_ID,
           input,
@@ -287,8 +322,14 @@ export class WolframService extends Service {
         params.conversationID = conversationID;
       }
 
-      const response = await this.client.get(WolframAPIEndpoint.LLM, {
+      // Use llmClient with absolute/override baseURL if provided in config
+      const llmUrl = this.wolframConfig.WOLFRAM_LLM_API_ENDPOINT || WolframAPIEndpoint.LLM;
+      const headers = this.wolframConfig.WOLFRAM_CLOUD_API_KEY
+        ? { "X-Wolfram-Cloud-Api-Key": this.wolframConfig.WOLFRAM_CLOUD_API_KEY }
+        : undefined;
+      const response = await this.getWithRetry(this.client, llmUrl, {
         params,
+        headers,
       });
 
       const result: WolframConversationResult = response.data;
@@ -517,7 +558,7 @@ export class WolframService extends Service {
   /**
    * Analyze data and provide statistical insights
    */
-  async analyzeData(data: string): Promise<any> {
+  async analyzeData(data: string): Promise<WolframAnalysisResult> {
     const cacheKey = `analyze:${data}`;
 
     const cached = this.getCached(cacheKey);
@@ -531,10 +572,10 @@ export class WolframService extends Service {
       const result = await this.query(`statistics ${data}`);
 
       if (!result.success || !result.pods) {
-        return { error: "Could not analyze data" };
+        return { input: data, results: {}, error: "Could not analyze data" };
       }
 
-      const analysis: any = {
+      const analysis: WolframAnalysisResult = {
         input: data,
         results: {},
       };
@@ -575,13 +616,17 @@ export class WolframService extends Service {
     const output: string[] = [];
 
     if (result.pods) {
-      for (const pod of result.pods) {
-        if (pod.primary || (!output.length && pod.subpods)) {
-          output.push(`**${pod.title}**`);
-          for (const subpod of pod.subpods || []) {
-            if (subpod.plaintext) {
-              output.push(subpod.plaintext);
-            }
+      // Prefer primary pods; skip "Input" pods explicitly
+      const pods = result.pods.filter((p) => p.title !== "Input");
+      const primaryPods = pods.filter((p) => p.primary);
+      const podsToRender = primaryPods.length > 0 ? primaryPods : pods;
+
+      for (const pod of podsToRender) {
+        if (!pod.subpods || pod.subpods.length === 0) continue;
+        output.push(`**${pod.title}**`);
+        for (const subpod of pod.subpods) {
+          if (subpod.plaintext) {
+            output.push(subpod.plaintext);
           }
         }
       }
@@ -636,6 +681,12 @@ export class WolframService extends Service {
 
     // Clean old cache entries
     this.cleanCache();
+
+    // Enforce max cache size (drop oldest)
+    if (this.cache.size > this.MAX_CACHE_ENTRIES) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) this.cache.delete(oldestKey);
+    }
   }
 
   private cleanCache(): void {
@@ -660,7 +711,7 @@ export class WolframService extends Service {
   /**
    * Get service statistics
    */
-  getStats(): any {
+  getStats(): WolframServiceStats {
     return {
       cacheSize: this.cache.size,
       activeConversations: this.conversationCache.size,

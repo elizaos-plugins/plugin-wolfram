@@ -21,6 +21,20 @@ const wolframEnvSchema = z.object({
     .optional()
     .default("https://api.wolframalpha.com/v2"),
 
+  // Optional: LLM API endpoint (different host/base than v2 API)
+  WOLFRAM_LLM_API_ENDPOINT: z
+    .string()
+    .url()
+    .optional()
+    .default("https://www.wolframalpha.com/api/v1/llm-api"),
+
+  // Optional: Conversation API endpoint
+  WOLFRAM_CONVERSATION_ENDPOINT: z
+    .string()
+    .url()
+    .optional()
+    .default("https://www.wolframalpha.com/api/v1/conversation.jsp"),
+
   // Optional: Response format preferences
   WOLFRAM_OUTPUT_FORMAT: z
     .enum(["plaintext", "image", "mathml", "sound", "wav"])
@@ -64,6 +78,12 @@ export async function validateWolframConfig(
         runtime.getSetting("WOLFRAM_ALPHA_APP_ID"),
       WOLFRAM_CLOUD_API_KEY: runtime.getSetting("WOLFRAM_CLOUD_API_KEY"),
       WOLFRAM_API_ENDPOINT: runtime.getSetting("WOLFRAM_API_ENDPOINT"),
+      WOLFRAM_LLM_API_ENDPOINT: runtime.getSetting(
+        "WOLFRAM_LLM_API_ENDPOINT",
+      ),
+      WOLFRAM_CONVERSATION_ENDPOINT: runtime.getSetting(
+        "WOLFRAM_CONVERSATION_ENDPOINT",
+      ),
       WOLFRAM_OUTPUT_FORMAT: runtime.getSetting("WOLFRAM_OUTPUT_FORMAT"),
       WOLFRAM_TIMEOUT: runtime.getSetting("WOLFRAM_TIMEOUT")
         ? parseInt(runtime.getSetting("WOLFRAM_TIMEOUT"), 10)

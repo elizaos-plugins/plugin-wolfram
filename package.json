@@ -1,6 +1,6 @@
 {
   "name": "@elizaos/plugin-wolfram",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Wolfram Alpha and Wolfram Cloud integration plugin for ElizaOS",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

@@ -42,6 +42,12 @@ WOLFRAM_CLOUD_API_KEY=your_cloud_api_key
 # Custom API endpoint (default: https://api.wolframalpha.com/v2)
 WOLFRAM_API_ENDPOINT=https://api.wolframalpha.com/v2
 
+# LLM API endpoint (default: https://www.wolframalpha.com/api/v1/llm-api)
+WOLFRAM_LLM_API_ENDPOINT=https://www.wolframalpha.com/api/v1/llm-api
+
+# Conversation API endpoint (default: https://www.wolframalpha.com/api/v1/conversation.jsp)
+WOLFRAM_CONVERSATION_ENDPOINT=https://www.wolframalpha.com/api/v1/conversation.jsp
+
 # Output format: plaintext, image, mathml, sound, wav (default: plaintext)
 WOLFRAM_OUTPUT_FORMAT=plaintext
 

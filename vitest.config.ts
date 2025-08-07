@@ -18,7 +18,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@elizaos/core': path.resolve(__dirname, '../packages/core/src'),
+      // Adjusted for monorepo layout
+      '@elizaos/core': path.resolve(__dirname, '../eliza/packages/core/src'),
     },
   },
 });

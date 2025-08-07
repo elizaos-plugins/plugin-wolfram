@@ -277,9 +277,9 @@ export enum WolframAPIEndpoint {
   SHORT = "/short",
   SPOKEN = "/spoken",
   RESULT = "/result",
-  LLM = "/llm-api",
-  CONVERSATION = "/conversation.jsp",
-  VALIDATE = "/validate",
+  // Note: LLM and CONVERSATION are absolute endpoints on a different host
+  LLM = "https://www.wolframalpha.com/api/v1/llm-api",
+  CONVERSATION = "https://www.wolframalpha.com/api/v1/conversation.jsp",
 }
 
 export interface WolframCacheEntry {
@@ -287,6 +287,22 @@ export interface WolframCacheEntry {
   result: any;
   timestamp: number;
   ttl: number;
+}
+
+export interface WolframAnalysisResult {
+  input: string;
+  results: Record<string, string[] | string>;
+  error?: string;
+}
+
+export interface WolframServiceStats {
+  cacheSize: number;
+  activeConversations: number;
+  config: {
+    units?: "metric" | "imperial";
+    location?: string;
+    maxResults?: number;
+  };
 }
 
 export interface WolframServiceOptions {

@@ -24,8 +24,9 @@ export const wolframKnowledgeProvider: Provider = {
         return { text: "", values: {}, data: {} };
       }
 
-      // Check if the message contains knowledge-seeking queries
-      const text = message.content.text?.toLowerCase() || "";
+      // Keep original casing for topic extraction, but use lowercase for keyword detection
+      const originalText = message.content.text || "";
+      const text = originalText.toLowerCase();
       const knowledgeKeywords = [
         "what is",
         "what are",
@@ -62,7 +63,7 @@ export const wolframKnowledgeProvider: Provider = {
       }
 
       // Extract potential topics from the message
-      const topics = extractTopics(text);
+      const topics = extractTopics(originalText);
 
       if (topics.length === 0) {
         return { text: "", values: {}, data: {} };
