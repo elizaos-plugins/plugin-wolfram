@@ -2,6 +2,16 @@
 
 ## [0.1.1] - 2025-01-XX
 
+### Added
+- Full action chaining support for all Wolfram actions
+  - All actions now return `ActionResult` interface with success, text, values, data, and error properties
+  - Actions can access previous action results via `ActionContext`
+  - Proper callback usage for immediate user feedback
+  - Structured data passing between chained actions
+  - Each action stores relevant data for subsequent actions to use
+- Complete character configuration examples in `examples/character.ts`
+- Clear documentation on proper plugin usage (plugins are referenced as package name strings)
+
 ### Fixed
 - Fixed TypeScript import errors by replacing non-existent `composeContext` with `composePromptFromState`
 - Fixed text generation by using `runtime.useModel()` instead of non-existent `generateText` function

@@ -1,3 +1,32 @@
+// ActionResult interface for action chaining support
+// This should be imported from @elizaos/core when available
+export interface ActionResult {
+  /** Whether the action succeeded - defaults to true */
+  success: boolean;
+
+  /** Optional text description of the result */
+  text?: string;
+
+  /** Values to merge into the state */
+  values?: Record<string, any>;
+
+  /** Data payload containing action-specific results */
+  data?: Record<string, any>;
+
+  /** Error information if the action failed */
+  error?: string | Error;
+}
+
+// Context provided to actions during execution
+export interface ActionContext {
+  /** Results from previously executed actions in this run */
+  previousResults: ActionResult[];
+
+  /** Get a specific previous result by action name */
+  getPreviousResult?: (actionName: string) => ActionResult | undefined;
+}
+
+// Original types below...
 export interface WolframAlphaQueryResult {
   success: boolean;
   error?: string;
@@ -232,7 +261,7 @@ export interface WolframQueryOptions {
   formattimeout?: number;
   parsetimeout?: number;
   totaltimeout?: number;
-  units?: 'metric' | 'imperial';
+  units?: "metric" | "imperial";
 }
 
 export interface WolframLLMOptions {
@@ -243,14 +272,14 @@ export interface WolframLLMOptions {
 }
 
 export enum WolframAPIEndpoint {
-  QUERY = '/query',
-  SIMPLE = '/simple',
-  SHORT = '/short',
-  SPOKEN = '/spoken',
-  RESULT = '/result',
-  LLM = '/llm-api',
-  CONVERSATION = '/conversation.jsp',
-  VALIDATE = '/validate',
+  QUERY = "/query",
+  SIMPLE = "/simple",
+  SHORT = "/short",
+  SPOKEN = "/spoken",
+  RESULT = "/result",
+  LLM = "/llm-api",
+  CONVERSATION = "/conversation.jsp",
+  VALIDATE = "/validate",
 }
 
 export interface WolframCacheEntry {
@@ -267,7 +296,7 @@ export interface WolframServiceOptions {
   timeout?: number;
   cache?: boolean;
   cacheTTL?: number;
-  units?: 'metric' | 'imperial';
+  units?: "metric" | "imperial";
   location?: string;
   maxResults?: number;
 }

@@ -23,8 +23,9 @@ interface AxiosInstance {
 
 export class WolframService extends Service {
   static serviceType = WOLFRAM_SERVICE_NAME;
-  capabilityDescription = "Provides Wolfram Alpha computational knowledge and mathematical problem solving";
-  
+  capabilityDescription =
+    "Provides Wolfram Alpha computational knowledge and mathematical problem solving";
+
   wolframConfig!: WolframConfig;
   client!: AxiosInstance;
   cache: Map<string, WolframCacheEntry>;
@@ -45,10 +46,11 @@ export class WolframService extends Service {
       this.wolframConfig = await validateWolframConfig(this.runtime);
 
       // Dynamic import axios to avoid build issues
-      const axios = await import('axios' as any) as any;
+      const axios = (await import("axios" as any)) as any;
       this.client = axios.default.create({
         baseURL:
-          this.wolframConfig.WOLFRAM_API_ENDPOINT || "https://api.wolframalpha.com/v2",
+          this.wolframConfig.WOLFRAM_API_ENDPOINT ||
+          "https://api.wolframalpha.com/v2",
         timeout: this.wolframConfig.WOLFRAM_TIMEOUT || 10000,
         headers: {
           "User-Agent": "ElizaOS-Wolfram-Plugin/1.0",
@@ -90,7 +92,7 @@ export class WolframService extends Service {
    */
   async query(
     input: string,
-    options: Partial<WolframQueryOptions> = {}
+    options: Partial<WolframQueryOptions> = {},
   ): Promise<WolframAlphaQueryResult> {
     const cacheKey = `query:${input}:${JSON.stringify(options)}`;
 
@@ -137,7 +139,9 @@ export class WolframService extends Service {
       return result;
     } catch (error) {
       logger.error("❌ Wolfram query failed:", error);
-      throw new Error(`Wolfram query failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Wolfram query failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -173,7 +177,9 @@ export class WolframService extends Service {
       return imageUrl;
     } catch (error) {
       logger.error("Failed to get simple answer:", error);
-      throw new Error(`Simple answer failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Simple answer failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -263,7 +269,7 @@ export class WolframService extends Service {
   async conversationalQuery(
     input: string,
     userId: string,
-    maxChars: number = 2000
+    maxChars: number = 2000,
   ): Promise<WolframConversationResult> {
     try {
       logger.log(`💬 Conversational query from user ${userId}: "${input}"`);
@@ -296,7 +302,9 @@ export class WolframService extends Service {
       return result;
     } catch (error) {
       logger.error("Error in conversational query:", error);
-      throw new Error(`Conversational query failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Conversational query failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -333,11 +341,12 @@ export class WolframService extends Service {
         (pod) =>
           pod.title === "Solution" ||
           pod.title === "Result" ||
-          pod.title.includes("solution")
+          pod.title.includes("solution"),
       );
 
       if (solutionPod && solutionPod.subpods && solutionPod.subpods[0]) {
-        const solution = solutionPod.subpods[0].plaintext || "No solution found";
+        const solution =
+          solutionPod.subpods[0].plaintext || "No solution found";
         this.setCached(cacheKey, solution);
         return solution;
       }
@@ -345,7 +354,9 @@ export class WolframService extends Service {
       return "No solution found";
     } catch (error) {
       logger.error("Error solving equation:", error);
-      throw new Error(`Failed to solve equation: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to solve equation: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -405,7 +416,9 @@ export class WolframService extends Service {
       return steps.length > 0 ? steps : ["No step-by-step solution available"];
     } catch (error) {
       logger.error("Error getting step-by-step solution:", error);
-      throw new Error(`Failed to get step-by-step solution: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to get step-by-step solution: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -439,7 +452,7 @@ export class WolframService extends Service {
           (pod) =>
             pod.title === "Result" ||
             pod.title === "Value" ||
-            pod.title === "Decimal approximation"
+            pod.title === "Decimal approximation",
         );
 
         if (resultPod && resultPod.subpods && resultPod.subpods[0]) {
@@ -452,7 +465,9 @@ export class WolframService extends Service {
       return "Could not compute expression";
     } catch (error) {
       logger.error("Error computing expression:", error);
-      throw new Error(`Failed to compute: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to compute: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -493,7 +508,9 @@ export class WolframService extends Service {
       return facts.length > 0 ? facts : [`No facts found about ${topic}`];
     } catch (error) {
       logger.error("Error getting facts:", error);
-      throw new Error(`Failed to get facts: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to get facts: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -541,7 +558,9 @@ export class WolframService extends Service {
       return analysis;
     } catch (error) {
       logger.error("Error analyzing data:", error);
-      throw new Error(`Failed to analyze data: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to analyze data: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -572,9 +591,7 @@ export class WolframService extends Service {
       output.push("\n*Assumptions:*");
       for (const assumption of result.assumptions) {
         if (assumption.values) {
-          output.push(
-            `- ${assumption.values.map((v) => v.desc).join(", ")}`
-          );
+          output.push(`- ${assumption.values.map((v) => v.desc).join(", ")}`);
         }
       }
     }
@@ -605,7 +622,11 @@ export class WolframService extends Service {
     return entry.result;
   }
 
-  private setCached(key: string, result: any, ttl: number = this.CACHE_TTL): void {
+  private setCached(
+    key: string,
+    result: any,
+    ttl: number = this.CACHE_TTL,
+  ): void {
     this.cache.set(key, {
       query: key,
       result,
@@ -650,7 +671,7 @@ export class WolframService extends Service {
       },
     };
   }
-  
+
   /**
    * Stop the service and clean up resources
    */

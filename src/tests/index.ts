@@ -1,14 +1,14 @@
-import { TestSuite, IAgentRuntime } from '@elizaos/core';
-import { WolframService, WOLFRAM_SERVICE_NAME } from '../service';
-import { isWolframConfigured } from '../environment';
+import { TestSuite, IAgentRuntime } from "@elizaos/core";
+import { WolframService, WOLFRAM_SERVICE_NAME } from "../service";
+import { isWolframConfigured } from "../environment";
 
 export class WolframTestSuite implements TestSuite {
-  name = 'wolfram';
+  name = "wolfram";
   private service: WolframService | null = null;
 
   async beforeAll(runtime: IAgentRuntime): Promise<void> {
     if (!isWolframConfigured(runtime)) {
-      console.warn('⚠️ Wolfram tests skipped - WOLFRAM_APP_ID not configured');
+      console.warn("⚠️ Wolfram tests skipped - WOLFRAM_APP_ID not configured");
       return;
     }
 
@@ -26,66 +26,76 @@ export class WolframTestSuite implements TestSuite {
 
   tests = [
     {
-      name: 'should initialize Wolfram service',
+      name: "should initialize Wolfram service",
       async fn(runtime: IAgentRuntime) {
-        const service = runtime.getService(WOLFRAM_SERVICE_NAME) as WolframService;
+        const service = runtime.getService(
+          WOLFRAM_SERVICE_NAME,
+        ) as WolframService;
         expect(service).toBeDefined();
         expect(service).toBeInstanceOf(WolframService);
       },
     },
     {
-      name: 'should perform basic computation',
+      name: "should perform basic computation",
       async fn(runtime: IAgentRuntime) {
-        const service = runtime.getService(WOLFRAM_SERVICE_NAME) as WolframService;
+        const service = runtime.getService(
+          WOLFRAM_SERVICE_NAME,
+        ) as WolframService;
         if (!service) {
-          console.warn('Service not available, skipping test');
+          console.warn("Service not available, skipping test");
           return;
         }
 
-        const result = await service.compute('2 + 2');
+        const result = await service.compute("2 + 2");
         expect(result).toBeDefined();
-        expect(result).toContain('4');
+        expect(result).toContain("4");
       },
     },
     {
-      name: 'should solve equations',
+      name: "should solve equations",
       async fn(runtime: IAgentRuntime) {
-        const service = runtime.getService(WOLFRAM_SERVICE_NAME) as WolframService;
+        const service = runtime.getService(
+          WOLFRAM_SERVICE_NAME,
+        ) as WolframService;
         if (!service) {
-          console.warn('Service not available, skipping test');
+          console.warn("Service not available, skipping test");
           return;
         }
 
-        const result = await service.solveMath('x + 3 = 7');
+        const result = await service.solveMath("x + 3 = 7");
         expect(result).toBeDefined();
-        expect(result.toLowerCase()).toContain('x');
+        expect(result.toLowerCase()).toContain("x");
       },
     },
     {
-      name: 'should get facts about topics',
+      name: "should get facts about topics",
       async fn(runtime: IAgentRuntime) {
-        const service = runtime.getService(WOLFRAM_SERVICE_NAME) as WolframService;
+        const service = runtime.getService(
+          WOLFRAM_SERVICE_NAME,
+        ) as WolframService;
         if (!service) {
-          console.warn('Service not available, skipping test');
+          console.warn("Service not available, skipping test");
           return;
         }
 
-        const facts = await service.getFacts('Earth');
+        const facts = await service.getFacts("Earth");
         expect(facts).toBeDefined();
         expect(Array.isArray(facts)).toBe(true);
         expect(facts.length).toBeGreaterThan(0);
       },
     },
     {
-      name: 'should get quick answers',
+      name: "should get quick answers",
       async fn(runtime: IAgentRuntime) {
-        const service = runtime.getService(WOLFRAM_SERVICE_NAME) as WolframService;
+        const service = runtime.getService(
+          WOLFRAM_SERVICE_NAME,
+        ) as WolframService;
         if (!service) {
-          console.warn('Service not available, skipping test');
+          console.warn("Service not available, skipping test");
           return;
         }
 
-        const result = await service.getShortAnswer('speed of light');
+        const result = await service.getShortAnswer("speed of light");
         expect(result).toBeDefined();
         expect(result.success).toBeDefined();
         if (result.success) {
@@ -94,20 +104,22 @@ export class WolframTestSuite implements TestSuite {
       },
     },
     {
-      name: 'should handle conversational queries',
+      name: "should handle conversational queries",
       async fn(runtime: IAgentRuntime) {
-        const service = runtime.getService(WOLFRAM_SERVICE_NAME) as WolframService;
+        const service = runtime.getService(
+          WOLFRAM_SERVICE_NAME,
+        ) as WolframService;
         if (!service) {
-          console.warn('Service not available, skipping test');
+          console.warn("Service not available, skipping test");
           return;
         }
 
-        const userId = 'test-user-' + Date.now();
+        const userId = "test-user-" + Date.now();
         const result = await service.conversationalQuery(
-          'Tell me about prime numbers',
-          userId
+          "Tell me about prime numbers",
+          userId,
         );
-        
+
         expect(result).toBeDefined();
         if (result.conversationID) {
           // Clear conversation after test
@@ -116,11 +128,13 @@ export class WolframTestSuite implements TestSuite {
       },
     },
     {
-      name: 'should format query results properly',
+      name: "should format query results properly",
       async fn(runtime: IAgentRuntime) {
-        const service = runtime.getService(WOLFRAM_SERVICE_NAME) as WolframService;
+        const service = runtime.getService(
+          WOLFRAM_SERVICE_NAME,
+        ) as WolframService;
         if (!service) {
-          console.warn('Service not available, skipping test');
+          console.warn("Service not available, skipping test");
           return;
         }
 
@@ -129,38 +143,40 @@ export class WolframTestSuite implements TestSuite {
           numpods: 2,
           pods: [
             {
-              title: 'Input',
-              id: 'Input',
-              scanner: 'Identity',
+              title: "Input",
+              id: "Input",
+              scanner: "Identity",
               position: 100,
               error: false,
               numsubpods: 1,
-              subpods: [{ plaintext: '2+2' }],
+              subpods: [{ plaintext: "2+2" }],
             },
             {
-              title: 'Result',
-              id: 'Result',
-              scanner: 'Simplification',
+              title: "Result",
+              id: "Result",
+              scanner: "Simplification",
               position: 200,
               error: false,
               numsubpods: 1,
-              subpods: [{ plaintext: '4' }],
+              subpods: [{ plaintext: "4" }],
             },
           ],
         };
 
         const formatted = service.formatResult(mockResult);
         expect(formatted).toBeDefined();
-        expect(formatted).toContain('Result');
-        expect(formatted).not.toContain('Input');
+        expect(formatted).toContain("Result");
+        expect(formatted).not.toContain("Input");
       },
     },
     {
-      name: 'should cache results properly',
+      name: "should cache results properly",
       async fn(runtime: IAgentRuntime) {
-        const service = runtime.getService(WOLFRAM_SERVICE_NAME) as WolframService;
+        const service = runtime.getService(
+          WOLFRAM_SERVICE_NAME,
+        ) as WolframService;
         if (!service) {
-          console.warn('Service not available, skipping test');
+          console.warn("Service not available, skipping test");
           return;
         }
 
@@ -168,8 +184,8 @@ export class WolframTestSuite implements TestSuite {
         const initialCacheSize = statsBefore.cacheSize;
 
         // Make a query that should be cached
-        await service.compute('3 * 3');
-        
+        await service.compute("3 * 3");
+
         const statsAfter = service.getStats();
         expect(statsAfter.cacheSize).toBeGreaterThan(initialCacheSize);
 
