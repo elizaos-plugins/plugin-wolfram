@@ -17,10 +17,6 @@ A comprehensive Wolfram Alpha and Wolfram Cloud integration plugin for ElizaOS, 
 ## Installation
 
 ```bash
-npm install @elizaos/plugin-wolfram
-# or
-yarn add @elizaos/plugin-wolfram
-# or
 bun add @elizaos/plugin-wolfram
 ```
 
@@ -85,7 +81,7 @@ WOLFRAM_APP_ID=your_app_id_here
 ### 2. Install the plugin
 
 ```bash
-npm install @elizaos/plugin-wolfram
+bun install @elizaos/plugin-wolfram
 ```
 
 ### 3. Add to your character configuration
